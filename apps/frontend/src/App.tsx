@@ -1,35 +1,78 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import { Login } from './pages/auth/Login';
+import { Register } from './pages/auth/Register';
+import { FeedbackForm } from './pages/Feedback/FeedbackForm';
+import { Dashboard } from './pages/dashboard/Dashboard';
 
-function App() {
-  const [count, setCount] = useState(0)
+// // Protected Route Wrapper
+// const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+//     const { isAuthenticated } = useAuth();
+//   if (!isAuthenticated) return <Navigate to="/login" replace />;
+//   return <>{children}</>;
+// };
 
+// Simple Layout for authenticated users
+const AppLayout = () => {
+  // const { logout, user } = useAuth();
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div>
+      {/* Simple Floating Header */}
+      <header className="fixed top-0 right-0 p-4 z-50 flex items-center gap-4">
+        <div className="text-slate-300 text-sm">
+          Logged in as <span className="text-white font-medium">name show</span>
+        </div>
+        <button
+          // onClick={logout}
+          className="px-4 py-2 text-sm text-white bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full transition-colors"
+        >
+          Sign Out
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      </header>
+      <Outlet />
+    </div>
   )
 }
 
-export default App
+// Route Configuration
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Navigate to="/login" replace />, // Default to login as requested
+  },
+  {
+    path: '/login',
+    element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <Register />,
+  },
+  {
+    path: '/dashboard',
+    element: <Dashboard />,
+  },
+  {
+    path: '/feedback', // Keeping the path as 'dashboard' but rendering FeedbackForm
+    element: (
+      // <ProtectedRoute>
+      <AppLayout />
+      // </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <FeedbackForm />,
+      },
+    ],
+  },
+]);
+
+function App() {
+  return (
+    // <AuthProvider>
+      <RouterProvider router={router} />
+    // </AuthProvider>
+  );
+}
+
+export default App;
