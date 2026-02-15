@@ -1,82 +1,80 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { motion } from 'framer-motion';
+import { useAuth } from "../../auth/AuthContext";
+import { loginApi } from "../../api/auth.api";
+import { ERROR_MESSAGES, ROUTES } from "../../constants";
+import type { DecodedToken } from "../../types";
 
-export const Login: React.FC = () => {
-    
+export function Login() {
+    const { login } = useAuth();
+    const navigate = useNavigate();
+
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
+
+        try {
+            const res = await loginApi({ email, password });
+            login(res.data.accessToken);
+
+            const decoded = jwtDecode<DecodedToken>(res.data.accessToken);
+            navigate(decoded.role === "admin" ? ROUTES.DASHBOARD : ROUTES.FEEDBACK);
+        } catch (err) {
+            if (axios.isAxiosError(err)) {
+                setError(
+                    err.response?.data?.message || ERROR_MESSAGES.LOGIN_FAILED
+                );
+            } else {
+                setError(ERROR_MESSAGES.UNEXPECTED_ERROR);
+            }
+            console.error("Login error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-orange-200 bg-cover bg-center">
-            <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
+        <div className="min-h-screen flex items-center flex-col justify-center p-4 bg-orange-200 bg-cover bg-center">
+            <h1 className="text-2xl font-bold mb-4">Welcome to Feedback Platform</h1>
+            <p className="text-lg font-medium mb-4">Login to continue</p>
 
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="max-w-md w-full glass-card rounded-2xl p-8 relative z-10"
-            >
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-white mb-2">
-                        Welcome Back
-                    </h2>
-                    <p className="text-slate-400">
-                        Don't have an account?{' '}
-                        <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                            Sign up
-                        </Link>
-                    </p>
-                </div>
+            {error && (
+                <p style={{ color: "red", marginBottom: "8px" }}>{error}</p>
+            )}
 
-                <form className="space-y-6" >
-                    <div className="space-y-4">
-                        <Input
-                            id="email-address"
-                            // name="email"
-                            type="email"
-                            autoComplete="email"
-                            required
-                            placeholder="name@example.com"
-                            //     value={email}
-                            // onChange={(e) => setEmail(e.target.value)}
-                            label="Email Address"
-                        />
-                        <Input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autoComplete="current-password"
-                            required
-                            placeholder="••••••••"
-                            // value={password}
-                            // onChange={(e) => setPassword(e.target.value)}
-                            label="Password"
-                        />
-                    </div>
+            <form onSubmit={handleSubmit}>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
+                <button type="submit" className="submit-btn" disabled={loading}>
+                    {loading ? "Logging in..." : "Login"}
+                </button>
+            </form>
 
-                    {/* {error && (
-                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
-                            {error}
-                        </div>
-                    )} */}
-
-                    <div>
-                        <Button
-                            type="submit"
-                            variant="gradient"
-                            className="w-full h-11"
-                            // isLoading={isLoading}
-                        >
-                            Sign in
-                        </Button>
-                    </div>
-
-                    <div className="text-xs text-center text-slate-500 mt-4">
-                        Use <span className="text-slate-400 font-mono">test@example.com</span> / <span className="text-slate-400 font-mono">password</span>
-                    </div>
-                </form>
-            </motion.div>
+            <p className="text-lg font-medium mt-4">
+                Don't have an account?{" "}
+                <Link to={ROUTES.REGISTER}>Register</Link>
+            </p>
         </div>
     );
-};
+}

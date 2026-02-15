@@ -1,51 +1,95 @@
+import { useAuth } from "../../auth/AuthContext";
+import { useFeedback } from "../../hooks";
+import { RATING_OPTIONS } from "../../constants";
+import { FeedbackList } from "./FeedbackList";
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Send, Star, Bug, Lightbulb, MessageSquare } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { TextArea } from '../../components/ui/TextArea';
+export function FeedbackForm() {
+    const { logout } = useAuth();
+    const {
+        feedbacks,
+        fetchLoading,
+        submitLoading,
+        error,
+        editing,
+        formData,
+        setFormField,
+        handleEdit,
+        cancelEdit,
+        handleSubmit,
+        handleDelete,
+    } = useFeedback();
 
-export const FeedbackForm: React.FC = () => {
     return (
-        <div className="min-h-screen w-full flex items-center justify-center p-4 bg-orange-200 bg-cover bg-center">
-            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+        <div className="min-h-screen w-full flex flex-col gap-4 items-center justify-center p-4 bg-orange-200 bg-cover bg-center">
+            <button onClick={logout}>Logout</button>
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative w-full max-w-lg glass-card rounded-2xl p-8 space-y-8"
-            >
-                <div className="text-center space-y-2">
-                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 mb-4 ring-1 ring-white/10">
-                        <MessageSquare className="h-6 w-6" />
-                    </div>
-                    <h2 className="text-3xl font-bold tracking-tight text-white">We value your opinion</h2>
-                    <p className="text-slate-400">Help us improve your experience by sharing your feedback.</p>
+            <h1 className="font-extrabold text-2xl">Feedback Form</h1>
+            <p className="text-lg font-medium">Share your feedback with us</p>
+
+            {error && (
+                <p style={{ color: "red", marginBottom: "8px" }}>{error}</p>
+            )}
+
+            <form className="flex flex-col gap-4 w-full max-w-lg" onSubmit={handleSubmit}>
+                <input
+                    type="text"
+                    placeholder="Subject"
+                    value={formData.subject}
+                    onChange={(e) => setFormField("subject", e.target.value)}
+                    required
+                />
+                <textarea
+                    rows={5}
+                    className="border border-gray-300 w-full p-4 rounded-2xl h-fit"
+                    placeholder="Message"
+                    value={formData.message}
+                    onChange={(e) => setFormField("message", e.target.value)}
+                    required
+                />
+                <select
+                    className="border border-gray-300 w-full p-4 rounded-2xl"
+                    value={formData.rating}
+                    onChange={(e) => setFormField("rating", Number(e.target.value))}
+                >
+                    {RATING_OPTIONS.map((r) => (
+                        <option key={r} value={r}>
+                            {r}
+                        </option>
+                    ))}
+                </select>
+
+                <div className="flex gap-2">
+                    <button type="submit" disabled={submitLoading}>
+                        {submitLoading
+                            ? editing
+                                ? "Updating..."
+                                : "Submitting..."
+                            : editing
+                                ? "Update Feedback"
+                                : "Submit Feedback"}
+                    </button>
+                    {editing && (
+                        <button type="button" onClick={cancelEdit}>
+                            Cancel
+                        </button>
+                    )}
                 </div>
+            </form>
 
-               
-                    <form className="space-y-6">
+            {/* Feedback List */}
+            <h2 className="font-bold text-xl mt-6">Your Feedbacks</h2>
 
-                        <div className="space-y-4">
-                            <Input
-                                label="Subject"
-                                placeholder="What's this about?"
-                                required
-                            />
-                            <TextArea
-                                label="Description"
-                                placeholder="Tell us more details..."
-                                rows={4}
-                                required
-                            />
-                        </div>
-
-                        <Button type="submit" variant="gradient" className="w-full h-12 text-lg shadow-xl shadow-indigo-500/20">
-                            Submit Feedback
-                        </Button>
-                    </form>
-            </motion.div>
+            {fetchLoading ? (
+                <p>Loading feedbacks...</p>
+            ) : feedbacks.length === 0 ? (
+                <p className="text-gray-600">No feedbacks yet. Submit one above!</p>
+            ) : (
+                <FeedbackList
+                    data={feedbacks}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            )}
         </div>
     );
-};
+}
