@@ -27,7 +27,7 @@ export const ERROR_MESSAGES = {
 // ─── Route Paths ────────────────────────────────────────────────────────────
 
 export const ROUTES = {
-    LOGIN: "/login",
+    LOGIN: "/",
     REGISTER: "/register",
     FEEDBACK: "/feedback",
     DASHBOARD: "/dashboard",
